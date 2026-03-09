@@ -1,5 +1,5 @@
-// 完整的飞书Webhook处理函数
-   module.exports = function(req, res) {
+ // Vercel专用的飞书Webhook处理函数
+   module.exports = async (req, res) => {
      // 设置响应头
      res.setHeader('Content-Type', 'application/json');
      res.setHeader('Access-Control-Al low-Origin', '*');
@@ -12,68 +12,64 @@
        return;
      }
 
-     // 记录访问
      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
 
-     // 处理GET请求（健康检查）
+     // 处理GET请求
      if (req.method === 'GET') {
        return res.json({
          status: 'ok',
-         service: 'Feishu Webhook Server',
+         service: 'Feishu Webhook Server on Vercel',
          timestamp: new Date().toISOString(),
-         path: req.url,
-         method: req.method
+         endpoint: '/api/feishu',
+         note: 'POST JSON with {"type":"url_verification","chal lenge":"test"} for Feishu verification'
        });
      }
 
-     // 处理POST请求（飞书Webhook）
+     // 处理POST请求
      if (req.method === 'POST') {
-       let body = '';
+       try {
+         // Vercel可能已经解析了body，也可能没有
+         let body = req.body;
 
-       // 收集请求体
-       req.on('data', chunk => {
-         body += chunk.toString();
-       });
-
-       req.on('end', () => {
-         try {
-           const data = body ? JSON.parse(body) : {};
-           console.log('Received data:', JSON.stringify(data, null, 2));
-
-           // 飞书URL验证请求
-           if (data.type === 'url_verification' && data.challenge) {
-             console.log('Responding to Feishu challenge:', data.challenge);
-             return res.json({
-               challenge: data.challenge
+         // 如果body是字符串，尝试解析
+         if (typeof body === 'string') {
+           try {
+             body = JSON.parse(body);
+           } catch (e) {
+             return res.status(400).json({
+               error: 'Invalid JSON',
+               message: e.message,
+               timestamp: new Date().toISOString()
              });
            }
+         }
 
-           // 其他飞书事件
-           if (data.type === 'im.message.receive_v1') {
-             console.log('Received message event:', data.event);
-             // 这里可以处理消息
-             return res.json({ ok: true });
-           }
+         console.log('Request body:', JSON.stringify(body, null, 2));
 
-           // 默认响应
-           res.json({
-             status: 'received',
-             message: 'Request received but not a Feishu verification',
-             timestamp: new Date().toISOString(),
-             receivedData: data
-           });
-
-         } catch (error) {
-           console.error('Error processing request:', error);
-           res.status(400).json({
-             error: 'Bad Request',
-             message: 'Invalid JSON format',
-             timestamp: new Date().toISOString()
+         // 飞书URL验证
+         if (body && body.type === 'url_verification' && body.challenge) {
+           console.log('Responding to Feishu challenge:', body.challenge);
+           return res.json({
+             challenge: body.challenge
            });
          }
-       });
 
-       return; // 等待异步处理
+         // 其他请求
+         return res.json({
+           status: 'received',
+           message: 'Request received',
+           timestamp: new Date().toISOString(),
+           body: body || {}
+         });
+
+       } catch (error) {
+         console.error('Server error:', error);
+         return res.status(500).json({
+           error: 'Internal Server Error',
+           message: error.message,
+           timestamp: new Date().toISOString()
+         });
+       }
      }
 
      // 其他HTTP方法
