@@ -1,59 +1,40 @@
-// Feishu Webhook for Vercel - Simple and Correct
+// feishu-webhook.js
    module.exports = async (req, res) => {
-     // Set CORS headers
+     // 设置CORS
      res.setHeader('Access-Control-Allow-Origin', '*');
-     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-     // Handle OPTIONS preflight
+     // 处理OPTIONS预检
      if (req.method === 'OPTIONS') {
-       res.status(200).end();
-       return;
+       return res.status(200).end();
      }
 
-     // Handle GET request
-     if (req.method === 'GET') {
-       res.json({
-         status: 'ok',
-         service: 'Feishu Webhook',
-         time: new Date().toISOString()
-       });
-       return;
-     }
+     console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
 
-     // Handle POST request
-     if (req.method === 'POST') {
-       try {
-         // Get request body
-         const body = req.body || {};
+     try {
+       const body = req.body || {};
 
-         // Feishu URL verification
-         if (body.type === 'url_verification' && body.challenge) {
-           res.json({
-             challenge: body.challenge
-           });
-           return;
-         }
-
-         // Other requests
-         res.json({
-           received: true,
-           body: body,
-           time: new Date().toISOString()
-         });
-
-       } catch (error) {
-         res.status(500).json({
-           error: error.message,
-           time: new Date().toISOString()
+       // 飞书URL验证
+       if (body.type === 'url_verification' && body.challenge) {
+         console.log('Feishu challenge:', body.challenge);
+         return res.status(200).json({
+           challenge: body.challenge
          });
        }
-       return;
-     }
 
-     // Other HTTP methods
-     res.status(405).json({
-       error: 'Method not allowed',
-       time: new Date().toISOString()
-     });
+       // 默认响应
+       return res.status(200).json({
+         status: 'ok',
+         service: 'Feishu Webhook',
+         timestamp: new Date().toISOString()
+       });
+
+     } catch (error) {
+       console.error('Error:', error);
+       return res.status(500).json({
+         error: 'Internal Server Error',
+         message: error.message
+       });
+     }
    };
