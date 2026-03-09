@@ -4,9 +4,9 @@
      res.setTimeout(30000);
 
      // CORS
-     res.setHeader('Access-Control-Al low-Origin', '*');
-     res.setHeader('Access-Control-Al low-Methods', 'GET, POST, OPTIONS');
-     res.setHeader('Access-Control-Al low-Headers', 'Content-Type');
+     res.setHeader('Access-Control-Allow-Origin', '*');
+     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
      // 处理OPTIONS
      if (req.method === 'OPTIONS') {
