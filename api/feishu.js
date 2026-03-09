@@ -1,72 +1,59 @@
-// 完整的飞书验证函数 - Vercel专用
+// Feishu Webhook for Vercel - Simple and Correct
    module.exports = async (req, res) => {
-     // 设置CORS头
+     // Set CORS headers
      res.setHeader('Access-Control-Al low-Origin', '*');
-     res.setHeader('Access-Control-Al low-Methods', 'GET, POST, OPTIONS');
+     res.setHeader('Access-Control-Al low-Methods', 'GET,POST,OPTIONS');
      res.setHeader('Access-Control-Al low-Headers', 'Content-Type');
 
-     // 处理OPTIONS预检请求
+     // Handle OPTIONS preflight
      if (req.method === 'OPTIONS') {
        res.status(200).end();
        return;
      }
 
-     // 处理GET请求（健康检查）
+     // Handle GET request
      if (req.method === 'GET') {
-       return res.json({
+       res.json({
          status: 'ok',
-         service: 'Feishu Webhook Server',
-         timestamp: new Date().toISOString(),
-         instructions: 'Send POST request with {"type":"url_verification","chal lenge":"your-challenge"}'
+         service: 'Feishu Webhook',
+         time: new Date().toISOString()
        });
+       return;
      }
 
-     // 只处理POST请求
-     if (req.method !== 'POST') {
-       return res.status(405).json({
-         error: 'Method Not Allowed',
-         message: 'Only POST requests are accepted for Feishu webhook'
-       });
-     }
+     // Handle POST request
+     if (req.method === 'POST') {
+       try {
+         // Get request body
+         const body = req.body || {};
 
-     try {
-       // 获取请求体 - Vercel自动解析
-       const body = req.body || {};
+         // Feishu URL verification
+         if (body.type === 'url_verification' && body.challenge) {
+           res.json({
+             challenge: body.challenge
+           });
+           return;
+         }
 
-       console.log('Received request:', JSON.stringify(body, null, 2));
+         // Other requests
+         res.json({
+           received: true,
+           body: body,
+           time: new Date().toISOString()
+         });
 
-       // 飞书URL验证
-       if (body.type === 'url_verification' && body.challenge) {
-         console.log('Feishu verification challenge:', body.challenge);
-         return res.json({
-           challenge: body.challenge
+       } catch (error) {
+         res.status(500).json({
+           error: error.message,
+           time: new Date().toISOString()
          });
        }
-
-       // 飞书消息事件
-       if (body.type === 'im.message.receive_v1') {
-         console.log('Feishu message event received');
-         return res.json({
-           ok: true,
-           message: 'Message received',
-           event: body.event
-         });
-       }
-
-       // 其他POST请求
-       return res.json({
-         status: 'received',
-         message: 'Request received but not a Feishu verification',
-         timestamp: new Date().toISOString(),
-         body: body
-       });
-
-     } catch (error) {
-       console.error('Error:', error);
-       return res.status(500).json({
-         error: 'Internal Server Error',
-         message: error.message,
-         timestamp: new Date().toISOString()
-       });
+       return;
      }
+
+     // Other HTTP methods
+     res.status(405).json({
+       error: 'Method not allowed',
+       time: new Date().toISOString()
+     });
    };
