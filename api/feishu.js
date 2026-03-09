@@ -4,9 +4,9 @@
      res.setTimeout(30000);
 
      // CORS
-     res.setHeader('Access-Control-Allow-Origin', '*');
-     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+     res.setHeader('Access-Control-Al low-Origin', '*');
+     res.setHeader('Access-Control-Al low-Methods', 'GET, POST, OPTIONS');
+     res.setHeader('Access-Control-Al low-Headers', 'Content-Type');
 
      // 处理OPTIONS
      if (req.method === 'OPTIONS') {
@@ -16,15 +16,8 @@
      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
 
      try {
-       // 解析JSON请求体
-       let body = {};
-       if (req.method === 'POST') {
-         if (typeof req.body === 'string') {
-           body = JSON.parse(req.body);
-         } else if (req.body) {
-           body = req.body;
-         }
-       }
+       // Vercel自动解析JSON，req.body已经是对象
+       let body = req.body || {};
 
        console.log('Request body:', JSON.stringify(body));
 
